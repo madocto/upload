@@ -66,31 +66,41 @@ class AjaxUploader extends Component<UploadProps> {
     }
   };
 
-  onFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    const { multiple } = this.props;
-
+  onFileDropOrPaste = (
+    e: React.DragEvent<HTMLDivElement> | React.ClipboardEvent<HTMLDivElement>,
+  ) => {
     e.preventDefault();
 
     if (e.type === 'dragover') {
       return;
     }
 
-    if (this.props.directory) {
-      traverseFileTree(
-        Array.prototype.slice.call(e.dataTransfer.items),
-        this.uploadFiles,
-        (_file: RcFile) => attrAccept(_file, this.props.accept),
+    const { multiple, accept, directory } = this.props;
+    let items: DataTransferItem[] = [];
+    let files: File[] = [];
+
+    if (e.type === 'drop') {
+      const dataTransfer = (e as React.DragEvent<HTMLDivElement>).dataTransfer;
+      items = [...(dataTransfer.items || [])];
+      files = [...(dataTransfer.files || [])];
+    } else if (e.type === 'paste') {
+      const clipboardData = (e as React.ClipboardEvent<HTMLDivElement>).clipboardData;
+      items = [...(clipboardData.items || [])];
+      files = [...(clipboardData.files || [])];
+    }
+
+    if (directory) {
+      traverseFileTree(Array.prototype.slice.call(items), this.uploadFiles, (_file: RcFile) =>
+        attrAccept(_file, accept),
       );
     } else {
-      let files = [...e.dataTransfer.files].filter((file: RcFile) =>
-        attrAccept(file, this.props.accept),
-      );
+      let acceptFiles = [...files].filter((file: RcFile) => attrAccept(file, accept));
 
       if (multiple === false) {
-        files = files.slice(0, 1);
+        acceptFiles = files.slice(0, 1);
       }
 
-      this.uploadFiles(files);
+      this.uploadFiles(acceptFiles);
     }
   };
 
@@ -298,8 +308,9 @@ class AjaxUploader extends Component<UploadProps> {
           onKeyDown: openFileDialogOnClick ? this.onKeyDown : () => {},
           onMouseEnter,
           onMouseLeave,
-          onDrop: this.onFileDrop,
-          onDragOver: this.onFileDrop,
+          onDrop: this.onFileDropOrPaste,
+          onDragOver: this.onFileDropOrPaste,
+          onPaste: this.onFileDropOrPaste,
           tabIndex: hasControlInside ? undefined : '0',
         };
     return (
