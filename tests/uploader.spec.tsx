@@ -432,6 +432,21 @@ describe('uploader', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
       await new Promise(resolve => setTimeout(resolve, 2000));
     });
+
+    it('support onMouseEnter and onMouseLeave', async () => {
+      const onMouseEnter = jest.fn();
+      const onMouseLeave = jest.fn();
+
+      const { container } = render(
+        <Upload onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} />,
+      );
+      const rcUpload = container.querySelector('.rc-upload')!;
+
+      fireEvent.mouseEnter(rcUpload);
+      fireEvent.mouseLeave(rcUpload);
+      expect(onMouseEnter).toHaveBeenCalled();
+      expect(onMouseLeave).toHaveBeenCalled();
+    });
   });
 
   describe('directory uploader', () => {
