@@ -307,6 +307,7 @@ describe('uploader', () => {
     });
 
     it('paste to upload', done => {
+      const rcUpload = uploader.container.querySelector('.rc-upload')!;
       const input = uploader.container.querySelector('input')!;
 
       const files = [
@@ -329,6 +330,7 @@ describe('uploader', () => {
         done(err);
       };
 
+      fireEvent.mouseEnter(rcUpload);
       fireEvent.paste(input, {
         clipboardData: { files },
       });
@@ -363,6 +365,7 @@ describe('uploader', () => {
 
     it('paste files with multiple false', done => {
       const { container } = render(<Upload {...props} multiple={false} />);
+      const rcUpload = container.querySelector('.rc-upload')!;
       const input = container.querySelector('input')!;
       const files = [
         new File([''], 'success.png', { type: 'image/png' }),
@@ -395,6 +398,7 @@ describe('uploader', () => {
         value: files,
       });
 
+      fireEvent.mouseEnter(rcUpload);
       fireEvent.paste(input, { clipboardData: { files } });
 
       setTimeout(() => {

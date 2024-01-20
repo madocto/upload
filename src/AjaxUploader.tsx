@@ -28,6 +28,8 @@ class AjaxUploader extends Component<UploadProps> {
 
   private fileInput: HTMLInputElement;
 
+  private isMouseEnter: boolean;
+
   private _isMounted: boolean;
 
   onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,9 +68,7 @@ class AjaxUploader extends Component<UploadProps> {
     }
   };
 
-  onFileDropOrPaste = (
-    e: React.DragEvent<HTMLDivElement> | React.ClipboardEvent<HTMLDivElement>,
-  ) => {
+  onFileDropOrPaste = (e: React.DragEvent<HTMLDivElement> | ClipboardEvent) => {
     e.preventDefault();
 
     if (e.type === 'dragover') {
@@ -84,7 +84,7 @@ class AjaxUploader extends Component<UploadProps> {
       items = [...(dataTransfer.items || [])];
       files = [...(dataTransfer.files || [])];
     } else if (e.type === 'paste') {
-      const clipboardData = (e as React.ClipboardEvent<HTMLDivElement>).clipboardData;
+      const clipboardData = (e as ClipboardEvent).clipboardData;
       items = [...(clipboardData.items || [])];
       files = [...(clipboardData.files || [])];
     }
@@ -104,13 +104,21 @@ class AjaxUploader extends Component<UploadProps> {
     }
   };
 
+  onPrePaste(e: ClipboardEvent) {
+    if (this.isMouseEnter) {
+      this.onFileDropOrPaste(e);
+    }
+  }
+
   componentDidMount() {
     this._isMounted = true;
+    document.addEventListener('paste', this.onPrePaste.bind(this));
   }
 
   componentWillUnmount() {
     this._isMounted = false;
     this.abort();
+    document.removeEventListener('paste', this.onPrePaste.bind(this));
   }
 
   uploadFiles = (files: File[]) => {
@@ -271,6 +279,18 @@ class AjaxUploader extends Component<UploadProps> {
     this.fileInput = node;
   };
 
+  handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    this.isMouseEnter = true;
+
+    this.props.onMouseEnter?.(e);
+  };
+
+  handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    this.isMouseEnter = false;
+
+    this.props.onMouseLeave?.(e);
+  };
+
   render() {
     const {
       component: Tag,
@@ -287,8 +307,6 @@ class AjaxUploader extends Component<UploadProps> {
       children,
       directory,
       openFileDialogOnClick,
-      onMouseEnter,
-      onMouseLeave,
       hasControlInside,
       ...otherProps
     } = this.props;
@@ -306,11 +324,10 @@ class AjaxUploader extends Component<UploadProps> {
       : {
           onClick: openFileDialogOnClick ? this.onClick : () => {},
           onKeyDown: openFileDialogOnClick ? this.onKeyDown : () => {},
-          onMouseEnter,
-          onMouseLeave,
+          onMouseEnter: this.handleMouseEnter,
+          onMouseLeave: this.handleMouseLeave,
           onDrop: this.onFileDropOrPaste,
           onDragOver: this.onFileDropOrPaste,
-          onPaste: this.onFileDropOrPaste,
           tabIndex: hasControlInside ? undefined : '0',
         };
     return (
